@@ -29,16 +29,13 @@ class MultiHeadAttention(nn.Module):
         scores = (Q @ K.transpose(-2, -1)) / math.sqrt(head_dim)
 
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, -1e9)
-
-        print(f'Raw Scores: {scores}')
+            scores = scores.masked_fill_(mask == 0, -1e9)
 
         scores = scores.softmax(dim=-1)
-        print(f'Scores after softmax: {scores}')
         scores = dropout(scores)
-        print(f'Scores after dropout: {scores}')
         x = scores @ V
-        print(f'Final Scores: {scores}')
+        #print("scores:", scores.shape)
+        #print("mask:  ", mask.shape)
         return x
 
     def forward(self, q, k, v, mask=None):
@@ -49,9 +46,9 @@ class MultiHeadAttention(nn.Module):
         # Reshape matrices -> (batch, seq_len, heads, head_dim)
         # batch: m.shape[0] m is the matrix you want to give.
         # seq_len: m.shape[1]
-        Q = Q.view(Q.shape[0], Q.shape[1], self.heads, self.head_dim)
-        K = K.view(K.shape[0], K.shape[1], self.heads, self.head_dim)
-        V = V.view(V.shape[0], V.shape[1], self.heads, self.head_dim)
+        Q = Q.view(Q.shape[0], Q.shape[1], self.heads, self.head_dim).transpose(1,2)
+        K = K.view(K.shape[0], K.shape[1], self.heads, self.head_dim).transpose(1,2)
+        V = V.view(V.shape[0], V.shape[1], self.heads, self.head_dim).transpose(1,2)
 
         # Calculate attention scores
         attention_scores = MultiHeadAttention.calculate_attention(Q, K, V, self.head_dim, mask, self.dropout)
